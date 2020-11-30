@@ -1,0 +1,7 @@
+- name: Setup Elm environment
+  # You may pin to the exact commit or the version.
+  # uses: JorelAli/setup-elm@175d89434fb358c0368f2fe38baeede68d60f26d
+  uses: JorelAli/setup-elm@v2
+  with:
+    # Version of Elm to use. E.g. 0.19.1
+    elm-version: # default is 0.19.1
