@@ -6,7 +6,9 @@ import Browser
 import Browser.Events
 import Element as E
 import Element.Background as Background
+import Element.Events
 import Element.Font as Font
+import Element.Input as Input
 import Color
 import Html exposing (Html)
 import Html.Events
@@ -31,6 +33,7 @@ type Msg
     = MouseDown
     | MouseUp
     | MouseMove (Quantity Float Pixels) (Quantity Float Pixels)
+    | PutStone
     | ViewportResize ViewportSize
 
 
@@ -63,6 +66,8 @@ update message model =
                 , Cmd.none )
             else
                 ( model, Cmd.none )
+        PutStone ->
+            ( { model | board = Board.initBoard }, Cmd.none )
         ViewportResize size ->
             ( {model | viewportSize = size }, Cmd.none )
 
@@ -86,25 +91,28 @@ init () =
     , Task.perform (ViewportResize << toViewportSize) Browser.Dom.getViewport
     )
 
+
+-- View
+
 view : Model -> Html Msg
 view model =
     let
-        px = model.viewportSize.width
-        py = model.viewportSize.height
+        w = model.viewportSize.width
+        h = model.viewportSize.height
     in
     E.layout []
         (E.column
             [ Background.color (E.rgb255 0 0 0)
             , Font.color (E.rgb255 200 200 200)
             , E.htmlAttribute (Html.Events.onMouseDown MouseDown)
-            , E.width (E.px px)
-            , E.height (E.px py)
+            , E.width (E.px w)
+            , E.height (E.px h)
             ]
             [E.html  (Scene3d.custom
                 { lights = Scene3d.twoLights lightBulb overheadLighting
                 , camera = camera model
                 , clipDepth = Length.meters 0.1
-                , dimensions = ( Pixels.int px, Pixels.int (3 * px // 4))
+                , dimensions = ( Pixels.int w, Pixels.int (3 * w // 4))
                 , antialiasing = Scene3d.multisampling
                 , exposure = Scene3d.exposureValue 6
                 , toneMapping = Scene3d.noToneMapping
@@ -112,8 +120,22 @@ view model =
                 , background = Scene3d.backgroundColor Color.black
                 , entities = [ basement ]  ++ allStoneEntities model.board
                 })
+            , gameController model (h - 3 * w //4) 
             ]
         )
+
+
+gameController : Model -> Int -> E.Element Msg
+gameController model height =
+    let
+        putButton =
+            Input.button
+                [ Element.Events.onClick PutStone ]
+                { onPress = Just PutStone, label = E.text "Put" }
+    in
+    E.row [ E.height (E.px height) ]
+        [ putButton ]
+
 
 
 decodeMouseMove : Decoder Msg
