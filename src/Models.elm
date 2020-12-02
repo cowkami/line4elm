@@ -9,4 +9,8 @@ type alias Model =
     , elevation : Angle
     , orbiting : Bool
     , board : Board
+    , viewportSize : ViewportSize
     }
+
+type alias ViewportSize =
+    { width : Int, height : Int}

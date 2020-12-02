@@ -144,7 +144,6 @@ camera model =
         }
 
 
-
 lightBulb : Light WorldCoordinates Bool
 lightBulb =
     Light.point (Light.castsShadows True)
