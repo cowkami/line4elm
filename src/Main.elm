@@ -6,9 +6,7 @@ import Browser
 import Browser.Events
 import Element as E
 import Element.Background as Background
-import Element.Events
 import Element.Font as Font
-import Element.Input as Input
 import Color
 import Html exposing (Html)
 import Html.Events
@@ -17,6 +15,8 @@ import Json.Decode as Decode exposing (Decoder)
 import Length exposing (Meters)
 import Scene3d
 import Scene3d.Light as Light exposing (Light)
+import Svg exposing (Svg)
+import Svg.Attributes as SvgAtr
 import Task
 import Pixels exposing (Pixels)
 import Quantity exposing (Quantity)
@@ -86,6 +86,7 @@ init () =
       , elevation = Angle.degrees 40
       , orbiting = False
       , board = Board.initBoard
+      , selected = -1
       , viewportSize = { width = 600, height = 400 }
       }
     , Task.perform (ViewportResize << toViewportSize) Browser.Dom.getViewport
@@ -108,34 +109,87 @@ view model =
             , E.width (E.px w)
             , E.height (E.px h)
             ]
-            [E.html  (Scene3d.custom
+            [ gameDisplay model w
+            , gameController model w (h - (3 * w // 4))
+            ]
+        )
+
+
+gameDisplay : Model -> Int -> E.Element Msg
+gameDisplay model width =
+    E.html (Scene3d.custom
                 { lights = Scene3d.twoLights lightBulb overheadLighting
                 , camera = camera model
                 , clipDepth = Length.meters 0.1
-                , dimensions = ( Pixels.int w, Pixels.int (3 * w // 4))
+                , dimensions = ( Pixels.int width, Pixels.int (3 * width // 4))
                 , antialiasing = Scene3d.multisampling
                 , exposure = Scene3d.exposureValue 6
                 , toneMapping = Scene3d.noToneMapping
                 , whiteBalance = Light.fluorescent
                 , background = Scene3d.backgroundColor Color.black
-                , entities = [ basement ]  ++ allStoneEntities model.board
-                })
-            , gameController model (h - 3 * w //4) 
-            ]
-        )
+                , entities = 
+                    [ basement ]
+                    ++ allStoneEntities model.board
+                }
+           )
+
+str : Int -> String 
+str s =
+    String.fromInt s
 
 
-gameController : Model -> Int -> E.Element Msg
-gameController model height =
+svgCircle : Int -> Int -> Int -> String -> Svg msg
+svgCircle cx cy radius color =
+    Svg.circle
+        [ SvgAtr.cx (str cx)
+        , SvgAtr.cy (str cy)
+        , SvgAtr.r (str radius)
+        , SvgAtr.fill color
+        ]
+        []
+
+
+svgSquare : Int -> Int -> Int -> Int -> String -> Float -> Svg msg
+svgSquare cx cy size radius color rotate =
+    Svg.rect
+        [ SvgAtr.x (str (cx - size // 2))
+        , SvgAtr.y (str (cy - size // 2))
+        , SvgAtr.width (str size)
+        , SvgAtr.height (str size)
+        , SvgAtr.rx (str radius)
+        , SvgAtr.ry (str radius)
+        , SvgAtr.transform ("rotate(" ++ (String.fromFloat rotate) ++ ", "
+                                      ++ (str cx) ++ ", " 
+                                      ++ (str cy) ++ ")")
+        , SvgAtr.fill color
+        ]
+        []
+
+
+boardController : Model -> Int -> Int -> E.Element msg
+boardController model width height =
     let
-        putButton =
-            Input.button
-                [ Element.Events.onClick PutStone ]
-                { onPress = Just PutStone, label = E.text "Put" }
+        boardSize =
+            floor ((toFloat height) / (sqrt 2))
+        rect = 
+            svgSquare
+                (width // 2)
+                (height // 2)
+                boardSize
+                (height // 20)
+                "rgb(200, 200, 200)"
     in
-    E.row [ E.height (E.px height) ]
-        [ putButton ]
+    E.html (Svg.svg [ SvgAtr.width (str width)
+                    , SvgAtr.height (str height)
+                    ]
+                    [ rect  (Angle.inDegrees model.azimuth) ])
 
+
+gameController : Model -> Int -> Int -> E.Element Msg
+gameController model width height =
+    E.row 
+        [ E.width (E.px width), E.height (E.px height) ]
+        [ boardController model width height]
 
 
 decodeMouseMove : Decoder Msg
