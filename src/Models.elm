@@ -9,7 +9,7 @@ type alias Model =
     , elevation : Angle
     , orbiting : Bool
     , board : Board
-    , selected : Int
+    , selected : (Int, Int)
     , viewportSize : ViewportSize
     }
 

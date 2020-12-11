@@ -42,7 +42,7 @@ black =
         }
 
 alminum : Material.Uniform WorldCoordinates
-alminum = 
+alminum =
     Material.nonmetal
         { baseColor = Color.rgb255 230 233 235
         , roughness = 0.1
@@ -85,10 +85,10 @@ basement =
 column : Float -> Float -> Float -> Scene3d.Entity WorldCoordinates
 column x y z =
     Scene3d.cylinder (Material.uniform alminum) <|
-        Cylinder3d.startingAt 
+        Cylinder3d.startingAt
             (Point3d.centimeters x y z)
             Direction3d.z
-            { radius = (Length.centimeters 0.05)  
+            { radius = (Length.centimeters 0.05)
             , length = (Length.centimeters 6)
             }
 
@@ -99,8 +99,9 @@ stoneCorr x y z =
     let
         f = \n -> (toFloat n)
     in
-        ( 0.7 * baseWidth * ((f x) / (f Board.maxX - 1) - 1/2)
-        , 0.7 * baseWidth * ((f y) / (f Board.maxY - 1) - 1/2)
+    -- swap x, y because SVG space's y is opposite direction of 3D's y.
+        ( 0.7 * baseWidth * ((f y) / (f Board.maxY - 1) - 1/2)
+        , 0.7 * baseWidth * ((f x) / (f Board.maxX - 1) - 1/2)
         , 0.7 * baseWidth * (f z) / (f Board.maxZ - 1) + stoneRadius
         )
 
@@ -125,7 +126,7 @@ allStoneEntities : Board -> List (Scene3d.Entity WorldCoordinates)
 allStoneEntities board =
     stoneEntity 0 0 0 board
 
-        
+
 
 -- Rendering --
 

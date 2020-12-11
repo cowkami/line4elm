@@ -31,23 +31,38 @@ type alias Board =
     , updated : Bool
     }
 
-isInRange : Int -> Int -> Int -> Bool
-isInRange n min max =
-    min <= n && n < max
-
-corr2Dto1D : Int -> Int -> Maybe Int
-corr2Dto1D x y =
-    if isInRange x 0 maxX && isInRange y 0 maxY then
-        Just (x + y * maxY)
-    else
-        Nothing
 
 initBoard : Board
 initBoard =
     { base = repeat (maxX * maxY) (repeat maxZ NoStone)
     , numStones = repeat (maxX * maxY) 0
-    , updated = True 
+    , updated = True
     }
+
+
+setStone : (Int, Int) -> Stone -> Board -> Board
+setStone (x, y) stone board =
+    let
+        maybeCorr = corr2Dto1D x y
+        maybeNCol = getArray2D x y board.numStones
+        maybeColumn = getArray2D x y board.base
+        updateBase = \ corr nCol column -> Array.set corr (Array.set nCol stone column) board.base
+        updateNumStones = \ corr nCol -> Array.set corr (nCol + 1) board.numStones
+
+        maybeBase = Maybe.map3 updateBase maybeCorr maybeNCol maybeColumn
+        maybeNumStones = Maybe.map2 updateNumStones maybeCorr maybeNCol
+    in
+        Maybe.map2
+            (\ base numStones ->
+                { board | base = base
+                , numStones = numStones
+                , updated = True
+                }
+            )
+            maybeBase
+            maybeNumStones
+            |> Maybe.withDefault {board | updated = False}
+
 
 getArray2D : Int -> Int -> Array a -> Maybe a
 getArray2D x y arr =
@@ -61,21 +76,14 @@ getStoneColor x y nColumn board =
     andThen (\ column -> Array.get nColumn column)
 
 
-setStone : Int -> Int -> Stone -> Board -> Board
-setStone x y stone board =
-    let
-        maybeCorr = corr2Dto1D x y
-        maybeNCol = getArray2D x y board.numStones
-        maybeColumn = getArray2D x y board.base
-        updateBase = \ corr nCol column -> Array.set corr (Array.set nCol stone column) board.base
-        updateNumStones = \ corr nCol -> Array.set corr (nCol + 1) board.numStones
+isInRange : Int -> Int -> Int -> Bool
+isInRange n min max =
+    min <= n && n < max
 
-        maybeBase = Maybe.map3 updateBase maybeCorr maybeNCol maybeColumn
-        maybeNumStones = Maybe.map2 updateNumStones maybeCorr maybeNCol
-    in
-        Maybe.map2 (\ base numStones -> 
-                {board | base = base
-                , numStones = numStones
-                , updated = True
-                }) maybeBase maybeNumStones
-            |> Maybe.withDefault {board | updated = False}
+
+corr2Dto1D : Int -> Int -> Maybe Int
+corr2Dto1D x y =
+    if isInRange x 0 maxX && isInRange y 0 maxY then
+        Just (x + y * maxY)
+    else
+        Nothing
