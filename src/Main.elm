@@ -3,6 +3,7 @@ module Main exposing (..)
 
 import Angle exposing (Angle)
 import Browser
+import Browser.Dom exposing (Viewport)
 import Browser.Events
 import Element as E
 import Element.Background as Background
@@ -14,6 +15,7 @@ import Html exposing (div, text)
 import Json.Decode as Decode exposing (Decoder)
 import Length exposing (Meters)
 import Scene3d
+import Scene3d exposing (Background)
 import Scene3d.Light as Light exposing (Light)
 import Svg exposing (Svg)
 import Svg.Attributes as SA
@@ -22,12 +24,11 @@ import Task
 import Pixels exposing (Pixels)
 import Quantity exposing (Quantity)
 
-import Models exposing (Model)
+import Board exposing (..)
+import Game exposing (..)
 import Objects exposing (..)
-import Board as B exposing (Board)
-import Scene3d exposing (Background)
-import Browser.Dom exposing (Viewport)
 import Models exposing (ViewportSize)
+import Models exposing (Model)
 
 
 type Msg
@@ -42,10 +43,14 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update message model =
     case message of
         MouseDown ->
-            if model.selected == (-1, -1)then
+            if model.selected == (-1, -1) then
                 ( { model | orbiting = True }, Cmd.none )
             else
-                ( { model | board = B.setStone model.selected B.Black model.board}
+                ( { model | board = setStone
+                        model.selected
+                        model.game.turn
+                        model.board
+                  , game = nextStep model.game}
                 , Cmd.none)
         MouseUp ->
             ( { model | orbiting = False }, Cmd.none )
@@ -90,7 +95,8 @@ init () =
     ( { azimuth = Angle.degrees 45
       , elevation = Angle.degrees 40
       , orbiting = False
-      , board = B.initBoard
+      , board = initBoard
+      , game = initGame
       , selected = (-1, -1)
       , viewportSize = { width = 600, height = 400 }
       }
@@ -108,7 +114,7 @@ view model =
     in
     E.layout []
         (E.column
-            [ Background.color (E.rgb255 255 255 255)
+            [ Background.color (E.rgb255 0 0 0)
             , Font.color (E.rgb255 200 200 200)
             , E.htmlAttribute (Html.Events.onMouseDown MouseDown)
             , E.width (E.px w)
@@ -123,7 +129,13 @@ view model =
 gameDisplay : Model -> Int -> E.Element Msg
 gameDisplay model width =
     E.html (Scene3d.custom
-                { lights = Scene3d.twoLights lightBulb overheadLighting
+                -- { lights = Scene3d.twoLights lightBulb overheadLighting
+                { lights = Scene3d.fiveLights 
+                    (lightBulb 10 10 30 100)
+                    (lightBulb -10 -10 30 100)
+                    (lightBulb 10 -10 30 100)
+                    (lightBulb -10 10 30 100)
+                    overheadLighting
                 , camera = camera model
                 , clipDepth = Length.meters 0.1
                 , dimensions = ( Pixels.int width, Pixels.int (3 * width // 4))
@@ -131,7 +143,7 @@ gameDisplay model width =
                 , exposure = Scene3d.exposureValue 6
                 , toneMapping = Scene3d.noToneMapping
                 , whiteBalance = Light.fluorescent
-                , background = Scene3d.backgroundColor Color.white
+                , background = Scene3d.backgroundColor Color.black
                 , entities =
                     [ basement ]
                     ++ allStoneEntities model.board
@@ -171,7 +183,7 @@ boardController model width height =
             [ SA.width (str width)
             , SA.height (str height)
             ]
-            ([ rect rotate ] ++ (buttons rotate))
+            ([ rect rotate ] ++ buttons rotate)
 
 
 
@@ -207,27 +219,25 @@ svgSquare cx cy size radius color rotate =
 svgButtons : Model -> Int -> Int -> Int -> Float -> List (Svg Msg)
 svgButtons model cx cy size rotate =
     let
-        nx = B.maxX
-        ny = B.maxY
         f = toFloat
-        initX = cx - round (f size * ((f nx) - 1) / (2 * (f nx + 1)))
-        initY = cy - round (f size * ((f ny) - 1) / (2 * (f ny + 1)))
+        initX = cx - round (f size * ((f maxX) - 1) / (2 * (f maxX + 1)))
+        initY = cy - round (f size * ((f maxY) - 1) / (2 * (f maxY + 1)))
         radius = size // 15
     in
     List.map
         (\n ->
             let
-                x = remainderBy nx n
-                y = n // nx
+                x = remainderBy maxX n
+                y = n // maxX 
             in
             svgCircle
                 (x, y)
-                (initX + (size // (nx + 1)) * x)
-                (initY + (size // (ny + 1)) * y)
+                (initX + (size // (maxX + 1)) * x)
+                (initY + (size // (maxY + 1)) * y)
                 radius
                 (if (x, y) ==  model.selected then "rgb(240, 140, 140)" else "rgb(240, 240, 240)")
                 (rotateStr cx cy rotate))
-        (List.range 0 (nx * ny - 1))
+        (List.range 0 (maxX * maxY - 1))
 
 
 svgCircle : (Int, Int) -> Int -> Int -> Int -> String -> String -> Svg Msg

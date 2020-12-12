@@ -46,8 +46,11 @@ setStone (x, y) stone board =
         maybeCorr = corr2Dto1D x y
         maybeNCol = getArray2D x y board.numStones
         maybeColumn = getArray2D x y board.base
-        updateBase = \ corr nCol column -> Array.set corr (Array.set nCol stone column) board.base
-        updateNumStones = \ corr nCol -> Array.set corr (nCol + 1) board.numStones
+        updateBase =
+            \ corr nCol column ->
+                Array.set corr (Array.set nCol stone column) board.base
+        updateNumStones =
+            \ corr nCol -> Array.set corr (nCol + 1) board.numStones
 
         maybeBase = Maybe.map3 updateBase maybeCorr maybeNCol maybeColumn
         maybeNumStones = Maybe.map2 updateNumStones maybeCorr maybeNCol

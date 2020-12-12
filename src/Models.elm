@@ -2,6 +2,7 @@ module Models exposing (..)
 
 import Angle exposing (Angle)
 import Board exposing (Board)
+import Game exposing (Game)
 
 
 type alias Model =
@@ -9,6 +10,7 @@ type alias Model =
     , elevation : Angle
     , orbiting : Bool
     , board : Board
+    , game : Game
     , selected : (Int, Int)
     , viewportSize : ViewportSize
     }

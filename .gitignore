@@ -7,4 +7,6 @@ elm-stuff
 # elm-repl generated files
 repl-temp-*
 
+public
+.firebase
 # End of https://www.toptal.com/developers/gitignore/api/elm

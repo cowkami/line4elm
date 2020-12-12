@@ -29,16 +29,16 @@ type WorldCoordinates
 
 white : Material.Uniform WorldCoordinates
 white =
-    Material.nonmetal
+    Material.metal
         { baseColor = Color.white
-        , roughness = 0.5
+        , roughness = 0.8
         }
 
 black : Material.Uniform WorldCoordinates
 black =
-    Material.nonmetal
+    Material.metal
         { baseColor = Color.black
-        , roughness = 0.4
+        , roughness = 0.3
         }
 
 alminum : Material.Uniform WorldCoordinates
@@ -49,11 +49,11 @@ alminum =
         }
 
 
-
 -- Entities --
 
+
 stoneRadius : Float
-stoneRadius = 0.7
+stoneRadius = 0.9
 
 whiteStone : Float -> Float -> Float -> Scene3d.Entity WorldCoordinates
 whiteStone x y z =
@@ -127,7 +127,6 @@ allStoneEntities board =
     stoneEntity 0 0 0 board
 
 
-
 -- Rendering --
 
 
@@ -145,13 +144,14 @@ camera model =
         }
 
 
-lightBulb : Light WorldCoordinates Bool
-lightBulb =
+lightBulb : Float -> Float -> Float -> Float -> Light WorldCoordinates Bool
+lightBulb xc yc zc lumens =
     Light.point (Light.castsShadows True)
         { chromaticity = Light.incandescent
-        , intensity = LuminousFlux.lumens 300
-        , position = Point3d.centimeters 10 10 30
+        , intensity = LuminousFlux.lumens lumens
+        , position = Point3d.centimeters xc yc zc
         }
+
 
 overheadLighting : Light WorldCoordinates Never
 overheadLighting =
